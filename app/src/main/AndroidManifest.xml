@@ -25,7 +25,8 @@
 
         <activity
             android:name=".EditorActivity"
-            android:launchMode="singleTop" />
+            android:theme="@style/EditorTheme"
+            android:parentActivityName=".CatalogActivity" />
 
     </application>
 </manifest>

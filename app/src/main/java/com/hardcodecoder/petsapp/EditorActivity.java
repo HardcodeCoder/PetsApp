@@ -1,5 +1,7 @@
 package com.hardcodecoder.petsapp;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -9,6 +11,10 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
+import com.hardcodecoder.petsapp.data.PetDbHelper;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,7 +47,6 @@ public class EditorActivity extends AppCompatActivity {
      * 0 for unknown gender, 1 for male, 2 for female.
      */
     private int mGender = 0;
-
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,11 +86,11 @@ public class EditorActivity extends AppCompatActivity {
                 String selection = (String) parent.getItemAtPosition(position);
                 if (!TextUtils.isEmpty(selection)) {
                     if (selection.equals(getString(R.string.gender_male))) {
-                        mGender = 1; // Male
+                        mGender = PetEntry.GENDER_MALE; // Male
                     } else if (selection.equals(getString(R.string.gender_female))) {
-                        mGender = 2; // Female
+                        mGender = PetEntry.GENDER_FEMALE; // Female
                     } else {
-                        mGender = 0; // Unknown
+                        mGender = PetEntry.GENDER_UNKNOWN; // Unknown
                     }
                 }
             }
@@ -112,7 +117,8 @@ public class EditorActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Do nothing for now
+                insertPet();
+                finish();
                 return true;
             // Respond to a click on the "Delete" menu option
             case R.id.action_delete:
@@ -125,6 +131,27 @@ public class EditorActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void insertPet() {
+        String name = mNameEditText.getText().toString().trim();
+        String breed = mBreedEditText.getText().toString().trim();
+        String weight = mWeightEditText.getText().toString().trim();
+        if (!name.equals("") && !weight.equals("")) {
+            ContentValues values = new ContentValues();
+            PetDbHelper mDbHelper = new PetDbHelper(this);
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            values.put(PetEntry.COLUMN_PET_NAME, name);
+            values.put(PetEntry.COLUMN_PET_BREED, breed);
+            values.put(PetEntry.COLUMN_PET_GENDER, mGender);
+            values.put(PetEntry.COLUMN_PET_WEIGHT, Integer.parseInt(weight));
+            long rowId = db.insert(PetEntry.TABLE_NAME, null, values);
+            if (rowId == -1)
+                Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
+            else
+                Toast.makeText(this, "Pet saved successfully with rowId = " + rowId, Toast.LENGTH_SHORT).show();
+            db.close();
+        }
     }
 }
 

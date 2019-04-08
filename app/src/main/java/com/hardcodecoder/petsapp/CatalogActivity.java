@@ -1,17 +1,27 @@
 package com.hardcodecoder.petsapp;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
+import com.hardcodecoder.petsapp.data.PetDbHelper;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+
 public class CatalogActivity extends AppCompatActivity {
+
+    private PetDbHelper mDbHelper;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +36,13 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        mDbHelper = new PetDbHelper(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        displayDatabaseInfo();
     }
 
     @Override
@@ -42,7 +59,8 @@ public class CatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
-                // Do nothing for now
+                insertDummyPet();
+                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -50,5 +68,67 @@ public class CatalogActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void insertDummyPet() {
+        ContentValues values = new ContentValues();
+        values.put(PetEntry.COLUMN_PET_NAME, "Toto");
+        values.put(PetEntry.COLUMN_PET_BREED, "Terrier");
+        values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
+        values.put(PetEntry.COLUMN_PET_WEIGHT, "7");
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.insert(PetEntry.TABLE_NAME, null, values);
+        db.close();
+    }
+
+    private void displayDatabaseInfo() {
+        // To access our database, we instantiate our subclass of SQLiteOpenHelper
+        // and pass the context, which is the current activity.
+        //PetDbHelper mDbHelper = new PetDbHelper(this);
+
+        // Create and/or open a database to read from it
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        // Perform this raw SQL query "SELECT * FROM pets"
+        // to get a Cursor that contains all rows from the pets table.
+        // Cursor cursor = db.rawQuery("SELECT * FROM " + PetEntry.TABLE_NAME, null);
+        String[] cols = new String[]{
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED,
+                PetEntry.COLUMN_PET_GENDER,
+                PetEntry.COLUMN_PET_WEIGHT};
+        Cursor c = db.query(PetEntry.TABLE_NAME, cols, null, null, null, null, null);
+        try {
+            // Display the number of rows in the Cursor (which reflects the number of rows in the
+            // pets table in the database).
+            TextView displayView = findViewById(R.id.text_view_pet);
+            displayView.setText("The pets table contains " + c.getCount() + " pets");
+            displayView.append("\n_id - name - breed - gender - weight");
+            int idIndex = c.getColumnIndex(PetEntry._ID);
+            int nameIndex = c.getColumnIndex(PetEntry.COLUMN_PET_NAME);
+            int breedIndex = c.getColumnIndex(PetEntry.COLUMN_PET_BREED);
+            int genderIndex = c.getColumnIndex(PetEntry.COLUMN_PET_GENDER);
+            int weightIndex = c.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT);
+            while (c.moveToNext()) {
+                int id = c.getInt(idIndex);
+                String name = c.getString(nameIndex);
+                String breed = c.getString(breedIndex);
+                int gender = c.getInt(genderIndex);
+                int weight = c.getInt(weightIndex);
+
+                displayView.append("\n" + id + "-" + name + "-" + breed + "-" + gender + "-" + weight);
+            }
+
+        } catch (Exception e) {
+            //cursor.close();
+            c.close();
+            e.printStackTrace();
+        }
+        /*finally {
+            // Always close the cursor when you're done reading from it. This releases all its
+            // resources and makes it invalid.
+            cursor.close();
+        }*/
     }
 }

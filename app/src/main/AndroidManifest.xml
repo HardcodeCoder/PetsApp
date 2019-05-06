@@ -28,5 +28,10 @@
             android:theme="@style/EditorTheme"
             android:parentActivityName=".CatalogActivity" />
 
+        <provider
+            android:authorities="com.hardcodecoder.petsapp"
+            android:name=".data.PetProvider"
+            android:exported="false"/>
+
     </application>
 </manifest>

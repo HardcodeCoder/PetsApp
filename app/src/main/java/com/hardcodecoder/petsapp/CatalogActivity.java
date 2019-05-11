@@ -3,7 +3,6 @@ package com.hardcodecoder.petsapp;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
-import com.hardcodecoder.petsapp.data.PetDbHelper;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class CatalogActivity extends AppCompatActivity {
 
-    private PetDbHelper mDbHelper;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,7 +33,6 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-        mDbHelper = new PetDbHelper(this);
     }
 
     @Override
@@ -76,9 +72,7 @@ public class CatalogActivity extends AppCompatActivity {
         values.put(PetEntry.COLUMN_PET_BREED, "Terrier");
         values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         values.put(PetEntry.COLUMN_PET_WEIGHT, "7");
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        db.insert(PetEntry.TABLE_NAME, null, values);
-        db.close();
+        getContentResolver().insert(PetEntry.CONTENT_URI, values);
     }
 
     private void displayDatabaseInfo() {
@@ -94,18 +88,22 @@ public class CatalogActivity extends AppCompatActivity {
                 PetEntry.COLUMN_PET_BREED,
                 PetEntry.COLUMN_PET_GENDER,
                 PetEntry.COLUMN_PET_WEIGHT};
-        //Cursor c = db.query(PetEntry.TABLE_NAME, cols, null, null, null, null, null);
 
         Cursor c = getContentResolver().query(PetEntry.CONTENT_URI,
                 projection,
                 null,
                 null,
                 null);
-        try {
+
+
+        if(c != null) {
             // Display the number of rows in the Cursor (which reflects the number of rows in the
             // pets table in the database).
             TextView displayView = findViewById(R.id.text_view_pet);
-            displayView.setText("The pets table contains " + c.getCount() + " pets");
+            displayView.setText("");
+            displayView.append(getString(R.string.info));
+            displayView.append(String.valueOf(c.getCount()));
+
             displayView.append("\n_id - name - breed - gender - weight");
             int idIndex = c.getColumnIndex(PetEntry._ID);
             int nameIndex = c.getColumnIndex(PetEntry.COLUMN_PET_NAME);
@@ -121,16 +119,7 @@ public class CatalogActivity extends AppCompatActivity {
 
                 displayView.append("\n" + id + "-" + name + "-" + breed + "-" + gender + "-" + weight);
             }
-
-        } catch (Exception e) {
-            if(null != c)
-                c.close();
-            e.printStackTrace();
+            c.close();
         }
-        /*finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor.close();
-        }*/
     }
 }

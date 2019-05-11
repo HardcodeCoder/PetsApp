@@ -14,14 +14,14 @@ public final class PetContract {
      * content authority is the package name for the app, which is guaranteed to be unique on the
      * device.
      */
-    public static final String CONTENT_AUTHORITY = "com.hardcodecoder.petsapp";
+    static final String CONTENT_AUTHORITY = "com.hardcodecoder.petsapp";
 
 
     /**
      * Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
      * the content provider.
      */
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
 
     /**
@@ -30,12 +30,12 @@ public final class PetContract {
      * looking at pet data. content://com.example.android.pets/staff/ will fail,
      * as the ContentProvider hasn't been given any information on what to do with "staff".
      */
-    public static final String PATH_PETS = "pets";
+    static final String PATH_PETS = "pets";
 
 
     public static final class PetEntry implements BaseColumns {
 
-        public static final String TABLE_NAME = "pets";
+        static final String TABLE_NAME = "pets";
 
         /** The content URI to access the pet data in the provider */
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_PETS);
@@ -49,5 +49,10 @@ public final class PetContract {
         public static final int GENDER_UNKNOWN = 0;
         public static final int GENDER_MALE = 1;
         public static final int GENDER_FEMALE = 2;
+
+        public static boolean isValidGender(int gender) {
+            if(gender == GENDER_UNKNOWN || gender == GENDER_MALE || gender == GENDER_FEMALE) return true;
+            return false;
+        }
     }
 }

@@ -7,6 +7,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,7 +38,7 @@ public class PetProvider extends ContentProvider {
     }
 
     private PetDbHelper mDbHelper;
-    // private static final String TAG = PetProvider.class.getSimpleName();
+    private static final String LOG_TAG = PetProvider.class.getSimpleName();
 
     @Override
     public boolean onCreate() {
@@ -81,6 +82,24 @@ public class PetProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
+        final int match = sUriMatcher.match(uri);
+        if(match == PETS) return insertPet(uri, values);
+        else throw new IllegalArgumentException("Insertion is not supported for " + uri);
+
+    }
+
+    private Uri insertPet(Uri uri, ContentValues values){
+        if(isDataValid(values)) {
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            long id = db.insert(PetEntry.TABLE_NAME, null, values);
+            if (id == -1) {
+                Log.e(LOG_TAG, "Failed to insert row for " + uri);
+                return null;
+            }
+            // Once we know the ID of the new row in the table,
+            // return the new URI with the ID appended to the end of it
+            return ContentUris.withAppendedId(uri, id);
+        }
         return null;
     }
 
@@ -91,6 +110,47 @@ public class PetProvider extends ContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
+        if(values != null) {
+            final int match = sUriMatcher.match(uri);
+            switch (match) {
+                case PETS:
+                    return updatePet(values,selection, selectionArgs);
+                case PET_ID:
+                    // For the PET_ID code, extract out the ID from the URI,
+                    // so we know which row to update. Selection will be "_id=?" and selection
+                    // arguments will be a String array containing the actual ID.
+                    selection = PetEntry._ID + "=?";
+                    selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                    return updatePet(values, selection, selectionArgs);
+
+                default:
+                    throw new IllegalArgumentException("Update is not supported for \" + uri");
+            }
+        }
         return 0;
+    }
+
+    private int updatePet(ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs){
+        if(values.size() == 0)
+            return 0;
+
+        if(isDataValid(values)){
+            SQLiteDatabase db = mDbHelper.getWritableDatabase();
+            return db.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        }
+        return 0;
+    }
+
+    private boolean isDataValid(ContentValues values){
+        if(!PetEntry.isValidGender(values.getAsInteger(PetEntry.COLUMN_PET_GENDER))) {
+            Log.e(LOG_TAG, "Please specify a valid gender");
+            return false;
+        }
+
+        if(values.getAsString(PetEntry.COLUMN_PET_NAME) == null) {
+            Log.e(LOG_TAG, "Please enter a valid name");
+            return false;
+        }
+        return true;
     }
 }

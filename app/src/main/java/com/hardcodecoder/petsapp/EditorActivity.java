@@ -1,7 +1,7 @@
 package com.hardcodecoder.petsapp;
 
 import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -14,7 +14,6 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
-import com.hardcodecoder.petsapp.data.PetDbHelper;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -137,21 +136,16 @@ public class EditorActivity extends AppCompatActivity {
         String name = mNameEditText.getText().toString().trim();
         String breed = mBreedEditText.getText().toString().trim();
         String weight = mWeightEditText.getText().toString().trim();
-        if (!name.equals("") && !weight.equals("")) {
-            ContentValues values = new ContentValues();
-            PetDbHelper mDbHelper = new PetDbHelper(this);
-            SQLiteDatabase db = mDbHelper.getWritableDatabase();
-            values.put(PetEntry.COLUMN_PET_NAME, name);
-            values.put(PetEntry.COLUMN_PET_BREED, breed);
-            values.put(PetEntry.COLUMN_PET_GENDER, mGender);
-            values.put(PetEntry.COLUMN_PET_WEIGHT, Integer.parseInt(weight));
-            long rowId = db.insert(PetEntry.TABLE_NAME, null, values);
-            if (rowId == -1)
-                Toast.makeText(this, "Error saving pet", Toast.LENGTH_SHORT).show();
-            else
-                Toast.makeText(this, "Pet saved successfully with rowId = " + rowId, Toast.LENGTH_SHORT).show();
-            db.close();
-        }
+
+        ContentValues values = new ContentValues();
+        values.put(PetEntry.COLUMN_PET_NAME, name);
+        values.put(PetEntry.COLUMN_PET_BREED, breed);
+        values.put(PetEntry.COLUMN_PET_GENDER, mGender);
+        values.put(PetEntry.COLUMN_PET_WEIGHT, Integer.parseInt(weight));
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+        if(null == newUri) Toast.makeText(this, R.string.editor_insert_pet_failed, Toast.LENGTH_SHORT).show();
+        else Toast.makeText(this, R.string.editor_insert_pet_successful, Toast.LENGTH_SHORT).show();
+
     }
 }
 

@@ -1,23 +1,33 @@
 package com.hardcodecoder.petsapp;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 
 
-public class CatalogActivity extends AppCompatActivity {
+public class CatalogActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
+
+    private static final int PETS_LOADER = 100;
+    private PetsCursorAdapter mAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,13 +43,27 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        ListView lv = findViewById(R.id.list_view);
+        View v = findViewById(R.id.empty_view);
+        lv.setEmptyView(v);
+
+        mAdapter = new PetsCursorAdapter(this, null);
+        lv.setAdapter(mAdapter);
+
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
+                Uri data = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id-1);
+                intent.setData(data);
+                startActivity(intent);
+            }
+        });
+
+        getSupportLoaderManager().initLoader(PETS_LOADER, null, this);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        displayDatabaseInfo();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -56,7 +80,6 @@ public class CatalogActivity extends AppCompatActivity {
             // Respond to a click on the "Insert dummy data" menu option
             case R.id.action_insert_dummy_data:
                 insertDummyPet();
-                displayDatabaseInfo();
                 return true;
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
@@ -75,51 +98,29 @@ public class CatalogActivity extends AppCompatActivity {
         getContentResolver().insert(PetEntry.CONTENT_URI, values);
     }
 
-    private void displayDatabaseInfo() {
-        // Create and/or open a database to read from it
-        //SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        // Perform this raw SQL query "SELECT * FROM pets"
-        // to get a Cursor that contains all rows from the pets table.
-        // Cursor cursor = db.rawQuery("SELECT * FROM " + PetEntry.TABLE_NAME, null);
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
         String[] projection = new String[]{
                 PetEntry._ID,
                 PetEntry.COLUMN_PET_NAME,
-                PetEntry.COLUMN_PET_BREED,
-                PetEntry.COLUMN_PET_GENDER,
-                PetEntry.COLUMN_PET_WEIGHT};
+                PetEntry.COLUMN_PET_BREED};
 
-        Cursor c = getContentResolver().query(PetEntry.CONTENT_URI,
-                projection,
-                null,
-                null,
-                null);
+        return new CursorLoader(this,    // Parent class context
+                PetEntry.CONTENT_URI,            // Uri to query
+                projection,                      // Columns to query for
+                null,                   // No selection
+                null,                // No selection arguments
+                null);                 // Default sort order
+    }
 
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        mAdapter.swapCursor(data);
+    }
 
-        if(c != null) {
-            // Display the number of rows in the Cursor (which reflects the number of rows in the
-            // pets table in the database).
-            TextView displayView = findViewById(R.id.text_view_pet);
-            displayView.setText("");
-            displayView.append(getString(R.string.info));
-            displayView.append(String.valueOf(c.getCount()));
-
-            displayView.append("\n_id - name - breed - gender - weight");
-            int idIndex = c.getColumnIndex(PetEntry._ID);
-            int nameIndex = c.getColumnIndex(PetEntry.COLUMN_PET_NAME);
-            int breedIndex = c.getColumnIndex(PetEntry.COLUMN_PET_BREED);
-            int genderIndex = c.getColumnIndex(PetEntry.COLUMN_PET_GENDER);
-            int weightIndex = c.getColumnIndex(PetEntry.COLUMN_PET_WEIGHT);
-            while (c.moveToNext()) {
-                int id = c.getInt(idIndex);
-                String name = c.getString(nameIndex);
-                String breed = c.getString(breedIndex);
-                int gender = c.getInt(genderIndex);
-                int weight = c.getInt(weightIndex);
-
-                displayView.append("\n" + id + "-" + name + "-" + breed + "-" + gender + "-" + weight);
-            }
-            c.close();
-        }
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        mAdapter.swapCursor(null);
     }
 }

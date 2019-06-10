@@ -67,8 +67,8 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
-
-        c.setNotificationUri(getContext().getContentResolver(), uri);
+        if(getContext() != null)
+            c.setNotificationUri(getContext().getContentResolver(), uri);
         return c;
     }
 
@@ -108,7 +108,8 @@ public class PetProvider extends ContentProvider {
             // return the new URI with the ID appended to the end of it
 
             //Notify
-            getContext().getContentResolver().notifyChange(uri, null);
+            if(getContext() != null)
+                getContext().getContentResolver().notifyChange(uri, null);
             return ContentUris.withAppendedId(uri, id);
         }
 
@@ -134,9 +135,10 @@ public class PetProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException();
         }
-        if(rowsDeleted > 0){
+
+        if(rowsDeleted > 0 && getContext() != null)
             getContext().getContentResolver().notifyChange(uri, null);
-        }
+
         return rowsDeleted;
     }
 
@@ -170,6 +172,7 @@ public class PetProvider extends ContentProvider {
             SQLiteDatabase db = mDbHelper.getWritableDatabase();
             int rowsUpdated = db.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
             if(rowsUpdated > 0 ){
+                if(getContext() != null)
                 getContext().getContentResolver().notifyChange(uri, null);
             }
             return rowsUpdated;

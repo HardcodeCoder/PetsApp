@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
@@ -55,8 +56,8 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(CatalogActivity.this, EditorActivity.class);
-                Uri data = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id-1);
-                intent.setData(data);
+                Uri currentPetUri = ContentUris.withAppendedId(PetEntry.CONTENT_URI, id);
+                intent.setData(currentPetUri);
                 startActivity(intent);
             }
         });
@@ -84,6 +85,7 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
             // Respond to a click on the "Delete all entries" menu option
             case R.id.action_delete_all_entries:
                 // Do nothing for now
+                deleteAllPets();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -112,6 +114,12 @@ public class CatalogActivity extends AppCompatActivity implements LoaderManager.
                 null,                   // No selection
                 null,                // No selection arguments
                 null);                 // Default sort order
+    }
+
+    private void deleteAllPets(){
+        int r = getContentResolver().delete(PetEntry.CONTENT_URI, null, null);
+        if(r > 0)
+            Toast.makeText(this, "All pets deleted successfully", Toast.LENGTH_SHORT).show();
     }
 
     @Override

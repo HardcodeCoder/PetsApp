@@ -51,7 +51,6 @@
 
     <!-- Gender category -->
     <LinearLayout
-        android:id="@+id/container_gender"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -82,7 +81,6 @@
 
     <!-- Measurement category -->
     <LinearLayout
-        android:id="@+id/container_measurement"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -111,7 +109,6 @@
 
             <!-- Units for weight (kg) -->
             <TextView
-                android:id="@+id/label_weight_units"
                 style="@style/EditorUnitsStyle"
                 android:text="@string/unit_pet_weight" />
         </RelativeLayout>

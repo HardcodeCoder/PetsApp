@@ -2,6 +2,7 @@ package com.hardcodecoder.petsapp;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,7 @@ import com.hardcodecoder.petsapp.data.PetContract.PetEntry;
 public class PetsCursorAdapter extends CursorAdapter {
 
 
-    public PetsCursorAdapter(Context context, Cursor c){
+    PetsCursorAdapter(Context context, Cursor c){
         super(context,c,0);
     }
 
@@ -27,6 +28,9 @@ public class PetsCursorAdapter extends CursorAdapter {
         TextView tv = view.findViewById(R.id.name);
         tv.setText(cursor.getString(cursor.getColumnIndexOrThrow(PetEntry.COLUMN_PET_NAME)));
         tv = view.findViewById(R.id.summary);
-        tv.setText(cursor.getString(cursor.getColumnIndexOrThrow(PetEntry.COLUMN_PET_BREED)));
+        String s = cursor.getString(cursor.getColumnIndexOrThrow(PetEntry.COLUMN_PET_BREED));
+        if(TextUtils.isEmpty(s))
+            s = "unknown breed";
+        tv.setText(s);
     }
 }
